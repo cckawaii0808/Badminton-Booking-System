@@ -1,119 +1,297 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>羽球報名系統</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        padding: 20px;
+      }
+      .registration-form {
+        max-width: 600px;
+        margin-bottom: 30px;
+      }
+      .loading {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      .status-message {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+    </style>
   </head>
   <body>
-    <h2>報名表單</h2>
-    <form id="bookingForm">
-      <label>姓名：</label>
-      <input type="text" id="name" required /><br /><br />
+    <div class="container">
+      <h1 class="mb-4">羽球報名系統</h1>
 
-      <label>程度：</label>
-      <select id="level">
-        <option>新手</option>
-        <option>初階</option>
-        <option>歡樂</option></select
-      ><br /><br />
+      <div class="card registration-form">
+        <div class="card-header">報名表單</div>
+        <div class="card-body">
+          <form id="bookingForm">
+            <div class="mb-3">
+              <label for="name" class="form-label">姓名</label>
+              <input type="text" class="form-control" id="name" required />
+            </div>
 
-      <label>場次：</label>
-      <input
-        type="text"
-        id="session"
-        placeholder="例如：4/5 南屯A場"
-        required
-      /><br /><br />
+            <div class="mb-3">
+              <label for="level" class="form-label">程度</label>
+              <select class="form-select" id="level">
+                <option>新手</option>
+                <option>初階</option>
+                <option>歡樂</option>
+                <option>進階</option>
+              </select>
+            </div>
 
-      <button type="submit">報名</button>
-    </form>
+            <div class="mb-3">
+              <label for="session" class="form-label">場次</label>
+              <input
+                type="text"
+                class="form-control"
+                id="session"
+                placeholder="例如：4/5 南屯A場"
+                required
+              />
+            </div>
 
-    <h3>目前報名人員：</h3>
-    <div id="registrationsList"></div>
-    <p id="status"></p>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              報名
+            </button>
+          </form>
+
+          <div
+            id="statusMessage"
+            class="status-message mt-3"
+            style="display: none"
+          ></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <span>目前報名名單</span>
+          <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-arrow-clockwise"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"
+              />
+              <path
+                d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"
+              />
+            </svg>
+            重新整理
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="registrationsList">
+            <p class="text-center">載入中...</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script>
+      // 設定 Google Apps Script 網址
       const scriptUrl =
-        "https://script.google.com/macros/s/AKfycbzFWdO-XagKt9uiJwi6sQEDSeYBAYIF6iKf3Cv9AuY1KTaQnBzkKLRBNmjaQjKNK7O1Ww/exec";
+        "https://script.google.com/macros/s/AKfycbx_OteFn2u17VsB2us7npyGmwkUALAjJs_Gsllj9H0lEHUhupMkBywCyN-pmXL_xZR0kw/exec";
+      // 顯示狀態訊息
+      function showStatus(message, isError = false) {
+        const statusEl = document.getElementById("statusMessage");
+        statusEl.textContent = message;
+        statusEl.style.display = "block";
 
-      // 報名表單提交
+        if (isError) {
+          statusEl.className = "status-message mt-3 error";
+        } else {
+          statusEl.className = "status-message mt-3 success";
+        }
+
+        // 5秒後自動隱藏訊息
+        setTimeout(() => {
+          statusEl.style.display = "none";
+        }, 5000);
+      }
+
+      // 設置載入狀態
+      function setLoading(isLoading) {
+        const submitBtn = document.getElementById("submitBtn");
+        const refreshBtn = document.getElementById("refreshBtn");
+
+        if (isLoading) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 處理中...';
+          refreshBtn.disabled = true;
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "報名";
+          refreshBtn.disabled = false;
+        }
+      }
+
+      // 提交報名表單
       document
         .getElementById("bookingForm")
         .addEventListener("submit", function (e) {
           e.preventDefault();
-          document.getElementById("status").textContent = "處理中...";
+          setLoading(true);
 
-          const name = document.getElementById("name").value;
+          const name = document.getElementById("name").value.trim();
           const level = document.getElementById("level").value;
-          const session = document.getElementById("session").value;
+          const session = document.getElementById("session").value.trim();
 
+          // 檢查輸入是否完整
+          if (!name || !session) {
+            showStatus("請填寫所有必填欄位", true);
+            setLoading(false);
+            return;
+          }
+
+          // 開始fetch請求
           fetch(scriptUrl, {
             method: "POST",
-            body: JSON.stringify({ name, level, session }),
             headers: {
-              "Content-Type": "text/plain", // 注意這裡用 text/plain 而非 application/json
+              "Content-Type": "text/plain",
             },
+            body: JSON.stringify({
+              name: name,
+              level: level,
+              session: session,
+            }),
           })
-            .then((res) => res.json()) // 改為 .json()
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("伺服器回應錯誤: " + response.status);
+              }
+              return response.json();
+            })
             .then((data) => {
               if (data.status === "success") {
-                document.getElementById("status").textContent =
-                  "✅ " + data.message;
+                showStatus("✅ " + data.message);
                 document.getElementById("bookingForm").reset();
-                // 重新載入報名名單
-                fetchRegistrations();
+                fetchRegistrations(); // 重新載入報名列表
               } else {
-                document.getElementById("status").textContent =
-                  "❌ " + data.message;
+                showStatus("❌ " + (data.message || "報名失敗"), true);
               }
             })
-            .catch((err) => {
-              console.error("錯誤:", err);
-              document.getElementById("status").textContent =
-                "❌ 發生錯誤，請稍後再試";
+            .catch((error) => {
+              console.error("提交報名時出錯:", error);
+              showStatus("❌ 連線出錯，請稍後再試", true);
+            })
+            .finally(() => {
+              setLoading(false);
             });
         });
 
-      // 獲取報名名單
+      // 獲取報名列表
       function fetchRegistrations() {
+        const listEl = document.getElementById("registrationsList");
+        listEl.innerHTML = '<p class="text-center">載入中...</p>';
+
         fetch(scriptUrl)
-          .then((res) => res.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("伺服器回應錯誤: " + response.status);
+            }
+            return response.json();
+          })
           .then((data) => {
-            if (data.status === "success") {
-              const registrationsDiv =
-                document.getElementById("registrationsList");
-              registrationsDiv.innerHTML = "";
-
-              if (data.data && data.data.length > 0) {
-                const list = document.createElement("ul");
-
-                data.data.forEach((reg) => {
-                  const item = document.createElement("li");
-                  // 格式化日期
-                  const date = new Date(reg.date);
-                  const formattedDate = date.toLocaleDateString();
-
-                  item.textContent = `${reg.name} (${reg.level}) - ${reg.session} [${formattedDate}]`;
-                  list.appendChild(item);
-                });
-
-                registrationsDiv.appendChild(list);
-              } else {
-                registrationsDiv.textContent = "目前沒有報名資料";
+            if (data.status === "success" && data.data) {
+              if (data.data.length === 0) {
+                listEl.innerHTML =
+                  '<p class="text-center">目前尚無報名資料</p>';
+                return;
               }
+
+              // 建立表格
+              const table = document.createElement("table");
+              table.className = "table table-striped table-hover";
+
+              // 添加表頭
+              const thead = document.createElement("thead");
+              thead.innerHTML = `
+            <tr>
+              <th>報名時間</th>
+              <th>姓名</th>
+              <th>程度</th>
+              <th>場次</th>
+            </tr>
+          `;
+              table.appendChild(thead);
+
+              // 添加表格內容
+              const tbody = document.createElement("tbody");
+              data.data.forEach((registration) => {
+                const row = document.createElement("tr");
+
+                // 格式化日期
+                let dateStr = "未知時間";
+                if (registration.timestamp) {
+                  const date = new Date(registration.timestamp);
+                  dateStr =
+                    date.toLocaleDateString() +
+                    " " +
+                    date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                }
+
+                row.innerHTML = `
+              <td>${dateStr}</td>
+              <td>${registration.name || ""}</td>
+              <td>${registration.level || ""}</td>
+              <td>${registration.session || ""}</td>
+            `;
+                tbody.appendChild(row);
+              });
+
+              table.appendChild(tbody);
+              listEl.innerHTML = "";
+              listEl.appendChild(table);
             } else {
-              document.getElementById("registrationsList").textContent =
-                "無法載入報名資料";
+              listEl.innerHTML =
+                '<p class="text-center text-danger">無法載入報名資料</p>';
             }
           })
-          .catch((err) => {
-            console.error("載入報名資料錯誤:", err);
-            document.getElementById("registrationsList").textContent =
-              "載入報名資料時發生錯誤";
+          .catch((error) => {
+            console.error("載入報名資料時出錯:", error);
+            listEl.innerHTML =
+              '<p class="text-center text-danger">載入報名資料時發生錯誤</p>';
           });
       }
 
-      // 頁面載入時獲取報名名單
+      // 刷新按鈕事件
+      document
+        .getElementById("refreshBtn")
+        .addEventListener("click", fetchRegistrations);
+
+      // 頁面載入時獲取報名列表
       document.addEventListener("DOMContentLoaded", fetchRegistrations);
     </script>
   </body>
