@@ -5,6 +5,7 @@ import { db } from "@/firebase";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/auth/Login.vue";
 import RegisterView from "../views/auth/Register.vue";
+import LineCallback from "../views/auth/LineCallback.vue";
 
 const routes = [
   {
@@ -21,6 +22,11 @@ const routes = [
     path: "/register",
     name: "register",
     component: RegisterView,
+  },
+  {
+    path: "/__/auth/handler",
+    name: "line-callback",
+    component: LineCallback,
   },
   {
     path: "/dashboard",

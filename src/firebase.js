@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,4 +18,14 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { db, auth };
+// LINE 登入供應商
+const lineProvider = new OAuthProvider('oidc.line');
+lineProvider.addScope('profile');
+lineProvider.addScope('openid');
+
+// 設定自訂參數
+lineProvider.setCustomParameters({
+  prompt: 'consent',  // 每次都顯示授權畫面
+});
+
+export { db, auth, lineProvider, signInWithPopup, signInWithRedirect, getRedirectResult };
