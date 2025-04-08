@@ -20,12 +20,16 @@ const auth = getAuth(app);
 
 // LINE 登入供應商
 const lineProvider = new OAuthProvider('oidc.line');
+
+// 添加基本範圍
 lineProvider.addScope('profile');
 lineProvider.addScope('openid');
+lineProvider.addScope('email');
 
-// 設定自訂參數
+// 設定自訂參數 - 不指定 redirect_uri
 lineProvider.setCustomParameters({
-  prompt: 'consent',  // 每次都顯示授權畫面
+  prompt: 'consent'
+  // 不要設定 response_type，讓 Firebase 自動處理
 });
 
 export { db, auth, lineProvider, signInWithPopup, signInWithRedirect, getRedirectResult };
