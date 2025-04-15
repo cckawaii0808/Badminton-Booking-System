@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>羽球報名系統</title>
+  <script type="text/javascript">
+    // 單頁應用的 GitHub Pages 重定向
+    (function() {
+      // 確保在 GitHub Pages 上工作
+      var segmentCount = 1;
+      var location = window.location;
+      var l = location.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/';
+      l = l + window.location.pathname.split('/').slice(1 + segmentCount).join('/').replace(/&/g, '~and~');
+      if (l.indexOf('.html') === -1) {
+        l = l + (l.slice(-1) === '/' ? '' : '/') + 'index.html';
+      }
+      
+      var repoName = 'Badminton-Booking-System';
+      var gitHubPath = '/' + repoName + '/';
+      
+      // 重定向
+      sessionStorage.setItem('redirect', location.pathname.replace(gitHubPath, '/'));
+      location.replace(gitHubPath);
+    })();
+  </script>
+</head>
+<body>
+</body>
+</html>
