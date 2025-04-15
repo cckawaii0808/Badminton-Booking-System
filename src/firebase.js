@@ -26,10 +26,9 @@ lineProvider.addScope('profile');
 lineProvider.addScope('openid');
 lineProvider.addScope('email');
 
-// 設定自訂參數 - 不指定 redirect_uri
-lineProvider.setCustomParameters({
-  prompt: 'consent'
-  // 不要設定 response_type，讓 Firebase 自動處理
-});
+// 完全使用預設設定，移除所有自定義參數
+// lineProvider.setCustomParameters({
+//   prompt: 'consent'
+// });
 
 export { db, auth, lineProvider, signInWithPopup, signInWithRedirect, getRedirectResult };
